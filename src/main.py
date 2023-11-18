@@ -1,6 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
-from pytube import YouTube
+from pytube import YouTube, Search
 import os
 
 
@@ -62,12 +62,18 @@ class YTDownloader:
         else:
             self.download.configure(command=self.start_video_download)
 
-    def start_video_download(self):
+    def start_download(self, audio=False):
         try:
             self.finish_download.configure(text="")
             yt_link = self.vid_url.get()
-            yt_object = YouTube(yt_link, on_progress_callback=self.on_progress)
-            file = yt_object.streams.get_highest_resolution()
+            try:
+                yt_object: YouTube = YouTube(yt_link, on_progress_callback=self.on_progress)
+            except Exception:
+                yt_object: YouTube = Search(yt_link).results[0]
+            if not audio:
+                file = yt_object.streams.get_highest_resolution()
+            else:
+                file = yt_object.streams.get_audio_only()
             file.download(output_path=self.download_path.get())
         except Exception as e:
             self.finish_download.configure(text="Error Downloading!", text_color='red')
@@ -75,18 +81,11 @@ class YTDownloader:
         else:
             self.finish_download.configure(text="Download Complete!", text_color='green')
 
+    def start_video_download(self):
+        self.start_download()
+
     def start_audio_download(self):
-        try:
-            self.finish_download.configure(text="")
-            yt_link = self.vid_url.get()
-            yt_object = YouTube(yt_link, on_progress_callback=self.on_progress)
-            file = yt_object.streams.get_audio_only()
-            file.download(output_path=self.download_path.get())
-        except Exception as e:
-            self.finish_download.configure(text="Error Downloading!", text_color='red')
-            print(e)
-        else:
-            self.finish_download.configure(text="Download Complete!", text_color='green')
+        self.start_download(audio=True)
 
     def on_progress(self, stream, chunk, bytes_remaining):
         total_size = stream.filesize
