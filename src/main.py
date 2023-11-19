@@ -46,6 +46,9 @@ class YTDownloader:
         self.finish_download = ctk.CTkLabel(self.app, text="")
         self.finish_download.pack()
 
+        self.exit = ctk.CTkButton(self.app, text="Done", command=self.app.destroy)
+        self.exit.pack(padx=10, pady=10)
+
     def __call__(self):
         self.app.mainloop()
 
@@ -63,12 +66,14 @@ class YTDownloader:
             self.download.configure(command=self.start_video_download)
 
     def start_download(self, audio=False):
+        self.progress_bar.set(0)
+        self.finish_download.configure(text="Download in progress...")
         try:
             self.finish_download.configure(text="")
             yt_link = self.vid_url.get()
-            try:
+            if yt_link.startswith("http"):
                 yt_object: YouTube = YouTube(yt_link, on_progress_callback=self.on_progress)
-            except Exception:
+            else:
                 yt_object: YouTube = Search(yt_link).results[0]
             if not audio:
                 file = yt_object.streams.get_highest_resolution()
